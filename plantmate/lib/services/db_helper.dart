@@ -7,62 +7,65 @@ class DBHelper {
   factory DBHelper() => _instance;
   DBHelper._internal();
 
-  static Database? _db;
-
+  Database? _db;
   Future<Database> get db async {
     if (_db != null) return _db!;
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'plantmate.db');
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE plants(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            planted_date TEXT NOT NULL
-          )
-        ''');
+        await db.execute(_createTable);
+      },
+      onUpgrade: (db, oldV, newV) async {
+        if (oldV < 2) {
+          await db.execute('DROP TABLE IF EXISTS plants');
+          await db.execute(_createTable);
+        }
       },
     );
     return _db!;
   }
 
-  /// 식물 추가
-  Future<int> insertPlant(Plant plant) async {
-    final client = await db;
-    return client.insert('plants', plant.toMap());
+  static const String _createTable = '''
+    CREATE TABLE plants(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      variety TEXT NOT NULL,
+      planted_date TEXT NOT NULL,
+      temperature REAL,
+      brightness REAL,
+      humidity REAL,
+      tank_level REAL,
+      tray_height REAL
+    )
+  ''';
+
+  Future<int> insertPlant(Plant p) async {
+    final dbClient = await db;
+    return dbClient.insert('plants', p.toMap());
   }
 
-  /// 저장된 모든 식물 조회
   Future<List<Plant>> fetchAllPlants() async {
-    final client = await db;
-    final maps = await client.query(
-      'plants',
-      orderBy: 'id DESC',
-    );
-    return maps.map((m) => Plant.fromMap(m)).toList();
+    final dbClient = await db;
+    final rows = await dbClient.query('plants', orderBy: 'id DESC');
+    return rows.map((m) => Plant.fromMap(m)).toList();
   }
 
-  /// 식물 삭제
   Future<int> deletePlant(int id) async {
-    final client = await db;
-    return client.delete(
-      'plants',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final dbClient = await db;
+    return dbClient.delete('plants', where: 'id = ?', whereArgs: [id]);
   }
 
-  /// 식물 정보 업데이트 (예: 이름 변경 or 날짜 변경)
-  Future<int> updatePlant(Plant plant) async {
-    final client = await db;
-    return client.update(
+  /// 식물 정보 업데이트
+  Future<int> updatePlant(Plant p) async {
+    final dbClient = await db;
+    return dbClient.update(
       'plants',
-      plant.toMap(),
+      p.toMap(),
       where: 'id = ?',
-      whereArgs: [plant.id],
+      whereArgs: [p.id],
     );
   }
 }
