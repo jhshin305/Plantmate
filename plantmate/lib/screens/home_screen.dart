@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('새 식물 추가'),
+                label: const Text('새 식물 심기'),
                 onPressed: _addPlant,
               ),
             )
@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 2),
                   Text('수통 잔량: ${_plant!.tankLevel}%'),
                   const SizedBox(height: 2),
-                  Text('물받이 높이: ${_plant!.trayHeight} cm'),
+                  Text('물받이 잔량: ${_plant!.trayHeight}%'),
                 ],
               ),
             ),

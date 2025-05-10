@@ -9,8 +9,9 @@ class AddPlantScreen extends StatefulWidget {
 
 class _AddPlantScreenState extends State<AddPlantScreen> {
   final _formKey = GlobalKey<FormState>();
+
   String _name = '';
-  String _variety = '상추';
+  String _variety = '';
   DateTime _date = DateTime.now();
   double _temp = 20;
   double _bright = 300;
@@ -18,7 +19,29 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   double _tank = 0;
   double _tray = 0;
 
-  final List<String> _varietyOptions = ['상추', '딸기', '토마토'];
+  late FocusNode _nameFocus;
+
+  final Map<String, String> _varietyAssets = {
+    '상추': 'assets/icons/lettuce.png',
+    '딸기': 'assets/icons/strawberry.png',
+    '토마토': 'assets/icons/tomato.png',
+  };
+  List<String> get _varietyOptions => _varietyAssets.keys.toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocus = FocusNode();
+    _nameFocus.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -27,9 +50,42 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
-      setState(() => _date = picked);
-    }
+    if (picked != null) setState(() => _date = picked);
+  }
+
+  Future<void> _pickVariety() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) {
+        return GridView.count(
+          crossAxisCount: 3,
+          padding: const EdgeInsets.all(16),
+          children: _varietyOptions.map((v) {
+            return GestureDetector(
+              onTap: () => Navigator.pop(context, v),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.grey[200],
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        _varietyAssets[v]!,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(v),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+    if (selected != null) setState(() => _variety = selected);
   }
 
   void _save() {
@@ -50,57 +106,77 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('새 식물 추가')),
+      appBar: AppBar(title: const Text('새 식물 심기')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              // 이름 입력
+              // 상단 이미지 선택
+              GestureDetector(
+                onTap: _pickVariety,
+                child: Center(
+                  child: Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[200],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Image.asset(
+                        _varietyAssets[_variety] ?? 'assets/icons/pot.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 선택된 품종명 표시
+              if (_variety.isNotEmpty)
+                Center(
+                  child: Text(
+                    _variety,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              if (_variety.isNotEmpty) const SizedBox(height: 16),
+
+              // 이름 입력 (중앙 정렬, 힌트 초기, 힌트 사라짐 on focus)
               TextFormField(
-                decoration: const InputDecoration(labelText: '이름'),
+                focusNode: _nameFocus,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  hintText: _nameFocus.hasFocus ? '' : '이름',
+                  border: InputBorder.none,
+                ),
                 validator: (val) => val == null || val.isEmpty ? '필수 입력' : null,
                 onSaved: (val) => _name = val!,
               ),
               const SizedBox(height: 16),
 
-              // 품종 선택 다이얼로그
-              TextFormField(
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: '품종',
-                ),
-                controller: TextEditingController(text: _variety),
-                onTap: () async {
-                  final selected = await showDialog<String>(
-                    context: context,
-                    builder: (ctx) => SimpleDialog(
-                      title: const Text('품종 선택'),
-                      children: _varietyOptions
-                          .map((v) => SimpleDialogOption(
-                                onPressed: () => Navigator.pop(ctx, v),
-                                child: Text(v),
-                              ))
-                          .toList(),
+              // 날짜 선택 (날짜 텍스트 터치 시 날짜 선택 창 열기)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('심은 날짜: '),
+                    GestureDetector(
+                      onTap: _pickDate,
+                      child: Text(
+                        _date.toLocal().toString().split(' ')[0],
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
                     ),
-                  );
-                  if (selected != null) {
-                    setState(() => _variety = selected);
-                  }
-                },
-                validator: (_) => _variety.isEmpty ? '필수 입력' : null,
-                onSaved: (_) {},
-              ),
-              const Divider(height: 32),
-
-              // 날짜 선택
-              Row(
-                children: [
-                  Text('심은 날짜: ${_date.toLocal().toString().split(' ')[0]}'),
-                  const Spacer(),
-                  TextButton(onPressed: _pickDate, child: const Text('선택')),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
