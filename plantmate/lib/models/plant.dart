@@ -22,26 +22,26 @@ class Plant {
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'variety': variety,
-        'planted_date': plantedDate.toIso8601String(),
-        'temperature': temperature,
-        'brightness': brightness,
-        'humidity': humidity,
-        'tank_level': tankLevel,
-        'tray_height': trayHeight,
-      };
+    'id': id,
+    'name': name,
+    'variety': variety,
+    'planted_date': plantedDate.toIso8601String(),
+    'temperature': temperature,
+    'brightness': brightness,
+    'humidity': humidity,
+    'tank_level': tankLevel,
+    'tray_height': trayHeight,
+  };
 
   factory Plant.fromMap(Map<String, dynamic> m) => Plant(
-        id: m['id'] as int?,
-        name: m['name'] as String,
-        variety: m['variety'] as String,
-        plantedDate: DateTime.parse(m['planted_date'] as String),
-        temperature: m['temperature'] as double?,
-        brightness: m['brightness'] as double?,
-        humidity: m['humidity'] as double?,
-        tankLevel: m['tank_level'] as double?,
-        trayHeight: m['tray_height'] as double?,
-      );
+    id: m['id'] as int?,
+    name: m['name'] as String,
+    variety: m['variety'] as String,
+    plantedDate: DateTime.parse(m['planted_date'] as String),
+    temperature: m['temperature'] as double?,
+    brightness: m['brightness'] as double?,
+    humidity: m['humidity'] as double?,
+    tankLevel: m['tank_level'] as double?,
+    trayHeight: m['tray_height'] as double?,
+  );
 }

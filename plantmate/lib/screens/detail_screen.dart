@@ -5,15 +5,15 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plantName = ModalRoute.of(context)!.settings.arguments as String;
+    // final plantName = ModalRoute.of(context)!.settings.arguments as String;
     return Scaffold(
-      appBar: AppBar(title: Text('$plantName 상세 정보')),
+      // appBar: AppBar(title: Text('$plantName 상세 정보')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(plantName, style: Theme.of(context).textTheme.headlineSmall),
+            // Text(plantName, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
             // 차트 자리
             Container(

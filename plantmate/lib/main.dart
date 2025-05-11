@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/add_plant_screen.dart';
 import 'screens/detail_screen.dart';
+import 'screens/settings_screen.dart';
 
 void main() => runApp(const PlantMateApp());
 
@@ -30,6 +31,7 @@ class PlantMateApp extends StatelessWidget {
         '/': (_) => const HomeScreen(),
         '/add': (_) => const AddPlantScreen(),
         '/detail': (_) => const DetailScreen(),
+        '/settings': (_) => const SettingsScreen(),
       },
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/plant.dart';
 import '../services/db_helper.dart';
+import '../models/plant.dart';
+import '../models/variety_defaults.dart';
 import 'add_plant_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,14 +14,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final DBHelper _db = DBHelper();
   Plant? _plant;
+  VarietyDefault? _varietyDefaults;
   bool _editingName = false;
   late TextEditingController _nameController;
-
-  final Map<String, String> _varietyAssets = {
-    '상추': 'assets/icons/lettuce.png',
-    '딸기': 'assets/icons/strawberry.png',
-    '토마토': 'assets/icons/tomato.png',
-  };
 
   @override
   void initState() {
@@ -38,15 +34,31 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadPlant() async {
     final plants = await _db.fetchAllPlants();
     if (plants.isNotEmpty) {
+      final defs = await _db.fetchVarietyDefaults(plants.first.variety);
       setState(() {
         _plant = plants.first;
+        _varietyDefaults = defs;
         _nameController.text = _plant!.name;
       });
     } else {
       setState(() {
         _plant = null;
+        _varietyDefaults = null;
       });
     }
+  }
+
+  void _goDetail(String type) {
+    if (_plant == null || _varietyDefaults == null) return;
+    Navigator.pushNamed(
+      context,
+      '/detail',
+      arguments: {
+        'plant': _plant!,
+        'defaults': _varietyDefaults!,
+        'type': type,
+      },
+    );
   }
 
   Future<void> _addOrEditPlant() async {
@@ -96,9 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
         trayHeight: _plant!.trayHeight,
       );
       await _db.updatePlant(updatedPlant);
-      setState(() {
-        _editingName = false;
-      });
+      setState(() => _editingName = false);
       _loadPlant();
     }
   }
@@ -111,21 +121,26 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: _plant != null
             ? [
                 IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: _addOrEditPlant,
-                ),
-                IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: _removePlant,
                 ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () => Navigator.pushNamed(context, '/settings'),
+                ),
               ]
-            : null,
+            : [
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () => Navigator.pushNamed(context, '/settings'),
+                ),
+              ],
       ),
       body: _plant == null
           ? Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('새 식물 추가'),
+                label: const Text('새 식물 심기'),
                 onPressed: _addOrEditPlant,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -140,62 +155,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // Plant Card
                   Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 4,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          // 상단 이미지
                           CircleAvatar(
                             radius: 48,
-                            backgroundImage: AssetImage(
-                              _varietyAssets[_plant!.variety] ?? 'assets/icons/pot.png',
-                            ),
+                            backgroundImage: AssetImage(_varietyDefaults?.assetPath ?? 'assets/icons/pot.png'),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            _plant!.variety,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
+                          Text(_plant!.variety, style: Theme.of(context).textTheme.bodyMedium),
                           const SizedBox(height: 12),
-                          // 이름
                           _editingName
                               ? TextField(
                                   controller: _nameController,
                                   textAlign: TextAlign.center,
-                                  decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                  ),
+                                  decoration: const InputDecoration(border: OutlineInputBorder()),
                                   onSubmitted: (_) => _saveNameEdit(),
                                   autofocus: true,
                                 )
                               : GestureDetector(
                                   onTap: () => setState(() => _editingName = true),
-                                  child: Text(
-                                    _plant!.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
+                                  child: Text(_plant!.name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                                 ),
                           const SizedBox(height: 8),
-                          Text(
-                            '심은 날짜: ${_plant!.plantedDate.toLocal().toString().split(' ')[0]}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                          Text('심은 날짜: ${_plant!.plantedDate.toLocal().toString().split(' ')[0]}', style: Theme.of(context).textTheme.bodySmall),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   // Sensor Data Grid
                   Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -203,26 +197,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         spacing: 16,
                         runSpacing: 12,
                         children: [
-                          _buildMetric(
-                              icon: Icons.thermostat,
-                              label: '온도',
-                              value: '${_plant!.temperature}℃'),
-                          _buildMetric(
-                              icon: Icons.wb_sunny,
-                              label: '조명',
-                              value: '${_plant!.brightness} lx'),
-                          _buildMetric(
-                              icon: Icons.water_drop,
-                              label: '습도',
-                              value: '${_plant!.humidity}%'),
-                          _buildMetric(
-                              icon: Icons.invert_colors,
-                              label: '수통',
-                              value: '${_plant!.tankLevel}%'),
-                          _buildMetric(
-                              icon: Icons.height,
-                              label: '물받이',
-                              value: '${_plant!.trayHeight} cm'),
+                          GestureDetector(
+                            onTap: () => _goDetail('temperature'),
+                            child: _buildMetric(icon: Icons.thermostat, label: '온도', value: '${_plant!.temperature}℃'),
+                          ),
+                          GestureDetector(
+                            onTap: () => _goDetail('brightness'),
+                            child: _buildMetric(icon: Icons.wb_sunny, label: '조명', value: '${_plant!.brightness} lx'),
+                          ),
+                          GestureDetector(
+                            onTap: () => _goDetail('humidity'),
+                            child: _buildMetric(icon: Icons.water_drop, label: '습도', value: '${_plant!.humidity}%'),
+                          ),
+                          _buildMetric(icon: Icons.invert_colors, label: '수통', value: '${_plant!.tankLevel}%'),
+                          _buildMetric(icon: Icons.height, label: '물받이', value: '${_plant!.trayHeight} cm'),
                         ],
                       ),
                     ),
@@ -230,20 +218,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-      floatingActionButton: _plant != null
-          ? null
-          : FloatingActionButton(
-              onPressed: _addOrEditPlant,
-              child: const Icon(Icons.add),
-            ),
+      floatingActionButton: _plant == null
+          ? FloatingActionButton(onPressed: _addOrEditPlant, child: const Icon(Icons.add))
+          : null,
     );
   }
 
-  Widget _buildMetric({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
+  Widget _buildMetric({required IconData icon, required String label, required String value}) {
     return SizedBox(
       width: (MediaQuery.of(context).size.width - 64) / 2,
       child: Row(
@@ -254,11 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: Theme.of(context).textTheme.bodySmall),
-              Text(value,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
         ],
