@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/plant.dart';
+import '../models/variety.dart';
 
 class DBHelper {
   static final DBHelper _instance = DBHelper._internal();
@@ -67,5 +68,18 @@ class DBHelper {
       where: 'id = ?',
       whereArgs: [p.id],
     );
+  }
+
+  Future<VarietyDefault> fetchVarietyDefaults(String variety) async {
+    final dbClient = await db; // your getter that opens the DB
+    final result = await dbClient.query(
+      'variety_defaults',
+      where: 'variety = ?',
+      whereArgs: [variety],
+    );
+    if (result.isEmpty) {
+      throw Exception('Defaults not found for variety $variety');
+    }
+    return VarietyDefault.fromMap(result.first);
   }
 }

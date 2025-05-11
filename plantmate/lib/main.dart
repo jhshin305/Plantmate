@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/add_plant_screen.dart';
 import 'screens/detail_screen.dart';
@@ -11,6 +12,16 @@ class PlantMateApp extends StatelessWidget {
   Widget build(BuildContext c) {
     return MaterialApp(
       title: 'PlantMate',
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData.from(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),
