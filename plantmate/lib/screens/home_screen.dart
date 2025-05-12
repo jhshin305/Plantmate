@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import '../services/db_helper.dart';
 import '../models/plant.dart';
 import '../models/variety_defaults.dart';
@@ -118,25 +119,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('🌿 PlantMate'),
-        actions: _plant != null
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: _removePlant,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () => Navigator.pushNamed(context, '/settings'),
-                ),
-              ]
-            : [
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () => Navigator.pushNamed(context, '/settings'),
-                ),
-              ],
+        actions: [
+          if(_plant != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _removePlant,
+            ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => Navigator.pushNamed(context, '/alerts'),
+            ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ]
       ),
       body: _plant == null
+          // 새로운 식물 추가화면
           ? Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
@@ -148,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             )
+          // 성장 중인 식물 정보 화면
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -156,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Plant Card
                   Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 4,
+                    elevation: 2,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -187,15 +188,56 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Sensor Data Grid
+                  // 건강 상태
                   Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Wrap(
+                      child: Column(
                         spacing: 16,
-                        runSpacing: 12,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // runSpacing: 12,
+                        children: [
+                          Text('건강 상태', style: Theme.of(context).textTheme.bodyMedium),
+                          // const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '위험',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.red),
+                              ),
+                              Text(
+                                '상추균핵병',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                          Text('생장 단계', style: Theme.of(context).textTheme.bodyMedium),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('육묘기', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey)),
+                              Text('생장기', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.green)),
+                              Text('착화/과실기', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey)),
+                            ]
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 환경 상태
+                  Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        spacing: 16,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // runSpacing: 12,
                         children: [
                           GestureDetector(
                             onTap: () => _goDetail('temperature'),
@@ -207,10 +249,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           GestureDetector(
                             onTap: () => _goDetail('humidity'),
-                            child: _buildMetric(icon: Icons.water_drop, label: '습도', value: '${_plant!.humidity}%'),
+                            child: _buildMetric(icon: Icons.water_drop_sharp, label: '습도', value: '${_plant!.humidity}%'),
                           ),
-                          _buildMetric(icon: Icons.invert_colors, label: '수통', value: '${_plant!.tankLevel}%'),
-                          _buildMetric(icon: Icons.height, label: '물받이', value: '${_plant!.trayHeight} cm'),
+                          _buildMetric(icon: Icons.water_outlined, label: '수통', value: '${_plant!.tankLevel}%'),
+                          _buildMetric(icon: Icons.water_outlined, label: '물받이', value: '${_plant!.trayHeight}%'),
                         ],
                       ),
                     ),
@@ -218,9 +260,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-      floatingActionButton: _plant == null
-          ? FloatingActionButton(onPressed: _addOrEditPlant, child: const Icon(Icons.add))
-          : null,
+      // floatingActionButton: _plant == null
+      //     ? FloatingActionButton(onPressed: _addOrEditPlant, child: const Icon(Icons.add))
+      //     : null,
     );
   }
 
@@ -235,7 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: Theme.of(context).textTheme.bodySmall),
-              Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+              (icon != Icons.wb_sunny)
+                ? Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))
+                : Text("on", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))
             ],
           ),
         ],

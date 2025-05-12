@@ -4,6 +4,7 @@ import 'screens/home_screen.dart';
 import 'screens/add_plant_screen.dart';
 import 'screens/detail_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/alert_screen.dart';
 
 void main() => runApp(const PlantMateApp());
 
@@ -32,6 +33,7 @@ class PlantMateApp extends StatelessWidget {
         '/add': (_) => const AddPlantScreen(),
         '/detail': (_) => const DetailScreen(),
         '/settings': (_) => const SettingsScreen(),
+        '/alerts': (_) => const AlertScreen(),
       },
     );
   }
